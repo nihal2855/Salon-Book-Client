@@ -8,8 +8,6 @@
 
 - **Live Website:** https://salonbo.vercel.app
 - **Live Backend API:** https://salonbo.onrender.com
-- **Client GitHub Repository:** https://github.com/your-username/salonbook-client
-- **Server GitHub Repository:** https://github.com/your-username/salonbook-server[cite: 4]
 
 ---
 
