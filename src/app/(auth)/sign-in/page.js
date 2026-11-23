@@ -15,39 +15,42 @@ export default function SignInPage() {
     const [loading, setLoading] = useState(false);
 
     const handleSignIn = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+    e.preventDefault();
+    setLoading(true);
 
-        try {
-            const { error } = await signIn.email({
-                email: email.trim(),
-                password,
-            });
+    try {
+      const { data, error } = await signIn.email({
+        email: email.trim(),
+        password,
+      });
 
-            if (error) {
-                throw new Error(error.message || "Invalid email or password.");
-            }
+      if (error) {
+        throw new Error(error.message || "Invalid email or password.");
+      }
 
-            const sessionRes = await authClient.getSession();
-            const user = sessionRes?.data?.user;
+      const sessionRes = await authClient.getSession({
+        fetchOptions: { cache: "no-store" },
+      });
+      const user = sessionRes?.data?.user || data?.user;
 
-            if (user?.isBlocked) {
-                await signOut();
-                toast.error("Your account has been blocked by an administrator.");
-                setLoading(false);
-                return;
-            }
+      if (user?.isBlocked) {
+        await signOut();
+        toast.error("Your account has been blocked by an administrator.");
+        setLoading(false);
+        return;
+      }
 
-            toast.success(`Welcome back, ${user?.name || "User"}!`);
-            const role = user?.role || "customer";
-            router.push(role === "admin" ? "/dashboard" : "/dashboard");
-            router.refresh();
-        } catch (err) {
-            toast.error(err.message || "Failed to sign in.");
-        } finally {
-            setLoading(false);
-        }
-    };
+      toast.success(`Welcome back, ${user?.name || "User"}!`);
+      const role = user?.role || "customer";
+      const targetUrl =
+        role === "admin" ? "/dashboard/admin" : "/dashboard/customer";
+
+      window.location.href = targetUrl;
+    } catch (err) {
+      toast.error(err.message || "Failed to sign in.");
+      setLoading(false);
+    }
+  };
 
     const handleGoogleSignIn = async () => {
         try {
