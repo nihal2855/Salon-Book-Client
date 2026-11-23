@@ -8,6 +8,11 @@ const db = client.db(process.env.DB_NAME || "salonbook");
 export const auth = betterAuth({
     database: mongodbAdapter(db),
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    trustedOrigins: [
+        process.env.BETTER_AUTH_URL?.replace(/\/$/, ""),
+        process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, ""),
+        "http://localhost:3000",
+    ].filter(Boolean),
     secret: process.env.BETTER_AUTH_SECRET,
     user: {
         modelName: "users",
