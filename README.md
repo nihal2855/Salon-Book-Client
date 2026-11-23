@@ -3,7 +3,7 @@
 **SalonBook** is a modern, responsive, role-based salon appointment booking web application. Customers can explore active salon treatments, search and filter services, request appointments for specific dates and time slots, and pay for confirmed bookings securely through Stripe. Administrators can manage salon services, review and confirm or cancel appointment requests, manage registered users, and monitor verified payment transactions[cite: 1, 2, 3].
 
 ---
- 
+  
 ## Live Links & Repositories
 
 - **Live Website:** https://salonbo.vercel.app
