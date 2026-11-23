@@ -1,53 +1,87 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useSession, signOut } from "@/lib/auth-client";
+import { useSession, signOut, authClient } from "@/lib/auth-client";
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
-    const router = useRouter();
-    const { data: session, isPending } = useSession();
+  const router = useRouter();
+  const { data: session, isPending } = useSession();
+  const [verifiedUser, setVerifiedUser] = useState(null);
+  const [checking, setChecking] = useState(true);
 
-    useEffect(() => {
-        if (isPending) return;
+  const rolesKey = allowedRoles.join(",");
 
-        if (!session?.user) {
-            toast.error("Please sign in to access this page.");
-            router.replace("/sign-in");
-            return;
+  useEffect(() => {
+    let isMounted = true;
+
+    async function verifyAccess() {
+      if (isPending) return;
+
+      let currentUser = session?.user || null;
+
+      if (!currentUser) {
+        try {
+          const fresh = await authClient.getSession({
+            fetchOptions: { cache: "no-store" },
+          });
+          currentUser = fresh?.data?.user || null;
+        } catch (err) {
+          currentUser = null;
         }
+      }
 
-        if (session.user.isBlocked) {
-            toast.error("Your account has been blocked by an administrator.");
-            signOut().then(() => router.replace("/sign-in"));
-            return;
-        }
+      if (!isMounted) return;
 
-        const userRole = session.user.role || "customer";
-        if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-            toast.error("You do not have permission to access this area.");
-            router.replace(userRole === "admin" ? "/dashboard/admin" : "/dashboard/customer");
-        }
-    }, [session, isPending, allowedRoles, router]);
+      if (!currentUser) {
+        toast.error("Please sign in to access this page.");
+        router.replace("/sign-in");
+        return;
+      }
 
-    if (isPending) {
-        return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-amber-600 border-t-transparent" />
-                <p className="text-sm font-medium text-stone-600">Verifying session...</p>
-            </div>
+      if (currentUser.isBlocked) {
+        toast.error("Your account has been blocked by an administrator.");
+        await signOut();
+        router.replace("/sign-in");
+        return;
+      }
+
+      const permitted = rolesKey ? rolesKey.split(",") : [];
+      const userRole = currentUser.role || "customer";
+      if (permitted.length > 0 && !permitted.includes(userRole)) {
+        toast.error("You do not have permission to access this area.");
+        router.replace(
+          userRole === "admin" ? "/dashboard/admin" : "/dashboard/customer"
         );
+        return;
+      }
+
+      setVerifiedUser(currentUser);
+      setChecking(false);
     }
 
-    if (!session?.user || session.user.isBlocked) {
-        return null;
-    }
+    verifyAccess();
 
-    const userRole = session.user.role || "customer";
-    if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-        return null;
-    }
+    return () => {
+      isMounted = false;
+    };
+  }, [session, isPending, rolesKey, router]);
 
-    return children;
+  if (isPending || checking) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-amber-600 border-t-transparent" />
+        <p className="text-sm font-medium text-stone-600">
+          Verifying session...
+        </p>
+      </div>
+    );
+  }
+
+  if (!verifiedUser) {
+    return null;
+  }
+
+  return children;
 }
