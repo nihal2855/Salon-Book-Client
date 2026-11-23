@@ -10,7 +10,7 @@
 - **Live Backend API:** https://salonbo.onrender.com
 
 ---  
- 
+  
 ## Important Features
 
 ### Public & Discovery Features
