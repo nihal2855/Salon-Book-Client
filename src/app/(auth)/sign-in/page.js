@@ -40,7 +40,7 @@ export default function SignInPage() {
 
             toast.success(`Welcome back, ${user?.name || "User"}!`);
             const role = user?.role || "customer";
-            router.push(role === "admin" ? "/dashboard/admin" : "/dashboard/customer");
+            router.push(role === "admin" ? "/" : "/");
             router.refresh();
         } catch (err) {
             toast.error(err.message || "Failed to sign in.");
